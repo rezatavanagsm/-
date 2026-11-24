@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>وقت‌یار | رزرو نوبت پزشکی</title>
+<style>
+:root{--blue:#1769aa;--blue2:#0f548d;--green:#18a999;--bg:#f4f7fb;--ink:#253247;--muted:#68778b;--line:#e2eaf2;--red:#d94848}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,"Segoe UI",sans-serif;line-height:1.8}
+header{background:linear-gradient(120deg,#155e9a,#2184c7);color:white;padding:18px max(20px,calc((100% - 1100px)/2));display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.logo{font-size:25px;font-weight:bold}.tag{font-size:12px;color:#dceeff}
+nav{display:flex;gap:8px;flex-wrap:wrap}button,.btn{border:0;border-radius:10px;padding:10px 15px;background:var(--blue);color:#fff;font:inherit;cursor:pointer}button:hover,.btn:hover{filter:brightness(.94)}button.secondary{background:#eaf2fa;color:var(--blue)}button.ghost{background:transparent;color:inherit;border:1px solid currentColor}button.danger{background:#fff0f0;color:var(--red);border:1px solid #ffd2d2}button:disabled{opacity:.45;cursor:not-allowed}
+main{max-width:1100px;margin:24px auto;padding:0 18px}.hero{background:linear-gradient(120deg,#e8f3ff,#f8fcff);border:1px solid #d6e8f8;border-radius:20px;padding:30px;margin-bottom:22px}.hero h1{font-size:30px;color:var(--blue);margin:0 0 8px}.hero p{margin:0;color:#52657a}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:15px}.card{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 4px 15px #173b5b0a}.card h3{margin:0 0 5px}.muted{color:var(--muted);font-size:13px}.price{color:var(--blue);font-weight:bold}.pill{display:inline-block;background:#e8f7f1;color:#167653;padding:3px 10px;border-radius:30px;font-size:12px}
+input,select{width:100%;padding:12px;border:1px solid #cfdae6;border-radius:10px;font:inherit;background:white;color:var(--ink)}label{display:block;font-size:13px;margin:9px 0 4px}.field{min-width:220px;flex:1}.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin:12px 0}.slot{background:#f0f6fc;color:var(--blue);border:1px solid #d5e5f5}.slot.selected{background:var(--blue);color:white}.slot.taken{opacity:.4;text-decoration:line-through;cursor:not-allowed}
+.notice{padding:12px 15px;background:#e8f7f1;border:1px solid #bce8d5;color:#176a4c;border-radius:12px;margin-bottom:15px}.notice.err{background:#fff0f0;border-color:#ffd1d1;color:#a72f2f}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#edf5fd;padding:15px;border-radius:12px}.stat b{display:block;font-size:24px;color:var(--blue)}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:28px}
+.hidden{display:none!important}.small{font-size:12px}.doctor-icon{width:54px;height:54px;border-radius:15px;background:#e8f3ff;color:var(--blue);display:grid;place-items:center;font-size:27px}
+@media(max-width:600px){header{align-items:flex-start}.hero h1{font-size:24px}.stats{grid-template-columns:1fr}.hero{padding:20px}}
+</style></head>
+<body>
+<header><div><div class="logo">▣ وقت‌یار</div><div class="tag">سامانه آنلاین رزرو نوبت پزشکان</div></div>
+<nav><button class="ghost" onclick="show('home')">خانه</button><button class="ghost" onclick="show('appointments')">نوبت‌های من</button><button class="ghost" onclick="show('doctorPanel')">پنل پزشک</button><button class="ghost" onclick="show('login')">ورود آزمایشی</button></nav></header>
+<main>
+<div id="notice" class="notice hidden"></div>
+<section id="home">
+<div class="hero"><h1>سلامت شما، اولویت ماست</h1><p>پزشک موردنظر را پیدا کنید، زمان مناسب را انتخاب کنید و نوبت خود را آنلاین ثبت کنید.</p></div>
+<div class="card" style="margin-bottom:18px"><div class="row between"><h3>جستجوی پزشک</h3><span class="pill">نسخه قابل اجرا</span></div><input id="search" placeholder="نام پزشک یا تخصص را بنویسید..." oninput="renderDoctors()"></div>
+<h2>پزشکان پیشنهادی</h2><div id="doctorList" class="grid"></div>
+</section>
+<section id="booking" class="hidden">
+<div class="row between"><h2>رزرو نوبت</h2><button class="secondary" onclick="show('home')">بازگشت</button></div>
+<div id="doctorDetail" class="card"></div>
+<div class="card" style="margin-top:15px"><h3>انتخاب تاریخ</h3><label for="date">تاریخ مراجعه</label><input type="date" id="date" value="2026-11-25" min="2026-11-23" onchange="renderSlots()"><h3 style="margin-top:15px">ساعت‌های قابل رزرو</h3><div id="slots" class="slots"></div><button id="bookBtn" onclick="book()" disabled>تأیید و ثبت نوبت</button></div>
+</section>
+<section id="appointments" class="hidden">
+<h2>داشبورد بیمار</h2><div class="stats"><div class="stat"><b id="countAll">0</b>کل نوبت‌ها</div><div class="stat"><b id="countActive">0</b>نوبت فعال</div><div class="stat"><b id="countCancelled">0</b>لغوشده</div></div>
+<h3>فهرست نوبت‌ها</h3><div id="appointmentList" class="grid"></div>
+</section>
+<section id="doctorPanel" class="hidden"><h2>پنل پزشک</h2><p class="muted">این پنل نمایشی است و نوبت‌های ثبت‌شده در مرورگر را نشان می‌دهد.</p><div id="doctorAppointments" class="grid"></div></section>
+<section id="login" class="hidden"><div class="card" style="max-width:500px;margin:auto"><h2>ورود آزمایشی</h2><p class="muted">برای نسخه نمایشی هر نام و شماره‌ای وارد کنید؛ احراز هویت واقعی انجام نمی‌شود.</p><label>نام کاربر</label><input id="userName" placeholder="نام و نام خانوادگی"><label>شماره موبایل</label><input id="phone" placeholder="09120000000"><button style="margin-top:15px" onclick="login()">ورود به سامانه</button></div></section>
+</main><footer>وقت‌یار | نمونه اولیه آموزشی مهندسی نرم‌افزار — اطلاعات این نسخه آزمایشی است.</footer>
+<script>
+const doctors=[
+{id:1,name:"دکتر علی محمدی",spec:"قلب و عروق",exp:"۱۵ سال سابقه",price:350000,rating:"۴.۹",bio:"متخصص بیماری‌های قلب و عروق و فشار خون."},
+{id:2,name:"دکتر سارا احمدی",spec:"پوست و مو",exp:"۱۰ سال سابقه",price:280000,rating:"۴.۸",bio:"متخصص پوست، مو و بیماری‌های پوستی."},
+{id:3,name:"دکتر رضا کریمی",spec:"ارتوپدی",exp:"۱۲ سال سابقه",price:320000,rating:"۴.۷",bio:"متخصص استخوان، مفاصل و آسیب‌های ورزشی."},
+{id:4,name:"دکتر مریم رضایی",spec:"کودکان",exp:"۸ سال سابقه",price:250000,rating:"۴.۹",bio:"متخصص بیماری‌های کودکان و مراقبت سلامت کودک."}
+];
+const hours=["09:00","09:30","10:00","10:30","11:00","11:30","12:00","16:00"];
+let appointments=JSON.parse(localStorage.getItem("vaghtyar_appointments")||"[]"),selectedDoctor=null,selectedTime=null;
+let currentUser=localStorage.getItem("vaghtyar_user")||"کاربر مهمان";
+const money=n=>n.toLocaleString("fa-IR")+" تومان";
+function save(){localStorage.setItem("vaghtyar_appointments",JSON.stringify(appointments))}
+function notice(msg,error=false){let el=document.getElementById("notice");el.textContent=msg;el.className="notice"+(error?" err":"");window.scrollTo({top:0,behavior:"smooth"})}
+function clearNotice(){document.getElementById("notice").className="notice hidden"}
+function show(id){clearNotice();document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));document.getElementById(id).classList.remove("hidden");if(id==="appointments")renderAppointments();if(id==="doctorPanel")renderDoctorPanel();if(id==="home")renderDoctors()}
+function renderDoctors(){let q=(document.getElementById("search")?.value||"").trim();let list=doctors.filter(d=>(d.name+d.spec).includes(q));document.getElementById("doctorList").innerHTML=list.map(d=>`<article class="card"><div class="row"><div class="doctor-icon">⚕</div><div><h3>${d.name}</h3><div class="muted">${d.spec} · امتیاز ${d.rating}</div></div></div><p class="muted">${d.bio}</p><div class="row between"><span class="price">${money(d.price)}</span><span class="muted">${d.exp}</span></div><button style="width:100%;margin-top:12px" onclick="openBooking(${d.id})">مشاهده و رزرو نوبت</button></article>`).join("")||'<div class="card">پزشکی با این مشخصات پیدا نشد.</div>'}
+function openBooking(id){selectedDoctor=doctors.find(d=>d.id===id);selectedTime=null;document.getElementById("date").value="2026-11-25";document.getElementById("doctorDetail").innerHTML=`<div class="row"><div class="doctor-icon">⚕</div><div><h3>${selectedDoctor.name}</h3><div class="muted">${selectedDoctor.spec} · ${selectedDoctor.exp}</div></div></div><p>${selectedDoctor.bio}</p><b class="price">هزینه ویزیت: ${money(selectedDoctor.price)}</b>`;show("booking");renderSlots()}
+function renderSlots(){if(!selectedDoctor)return;selectedTime=null;document.getElementById("bookBtn").disabled=true;let date=document.getElementById("date").value;document.getElementById("slots").innerHTML=hours.map(h=>{let taken=appointments.some(a=>a.doctorId===selectedDoctor.id&&a.date===date&&a.time===h&&a.status==="تأییدشده");return `<button class="slot ${taken?"taken":""}" ${taken?"disabled":""} onclick="selectSlot('${h}',this)">${h}</button>`}).join("")}
+function selectSlot(h,el){selectedTime=h;document.querySelectorAll(".slot").forEach(x=>x.classList.remove("selected"));el.classList.add("selected");document.getElementById("bookBtn").disabled=false}
+function book(){if(!selectedDoctor||!selectedTime)return;let date=document.getElementById("date").value;if(appointments.some(a=>a.doctorId===selectedDoctor.id&&a.date===date&&a.time===selectedTime&&a.status==="تأییدشده")){notice("این زمان قبلاً رزرو شده است؛ ساعت دیگری انتخاب کنید.",true);renderSlots();return}let a={id:Date.now(),doctorId:selectedDoctor.id,doctor:selectedDoctor.name,spec:selectedDoctor.spec,date,time:selectedTime,status:"تأییدشده",patient:currentUser};appointments.push(a);save();selectedTime=null;notice("نوبت با موفقیت ثبت شد.");show("appointments")}
+function renderAppointments(){let active=appointments.filter(a=>a.status==="تأییدشده"),cancelled=appointments.filter(a=>a.status==="لغوشده");document.getElementById("countAll").textContent=appointments.length.toLocaleString("fa-IR");document.getElementById("countActive").textContent=active.length.toLocaleString("fa-IR");document.getElementById("countCancelled").textContent=cancelled.length.toLocaleString("fa-IR");document.getElementById("appointmentList").innerHTML=appointments.length?appointments.slice().reverse().map(a=>`<article class="card"><div class="row between"><h3>${a.doctor}</h3><span class="pill" style="${a.status==="لغوشده"?"background:#fff0f0;color:#b33":""}">${a.status}</span></div><div class="muted">${a.spec}</div><p>تاریخ: ${a.date}<br>ساعت: ${a.time}</p>${a.status==="تأییدشده"?`<button class="danger" onclick="cancelAppointment(${a.id})">لغو نوبت</button>`:""}</article>`).join(""):'<div class="card">هنوز نوبتی ثبت نکرده‌اید. از صفحه خانه یک پزشک انتخاب کنید.</div>'}
+function cancelAppointment(id){let a=appointments.find(x=>x.id===id);if(a){a.status="لغوشده";save();renderAppointments();notice("نوبت لغو شد.")}}
+function renderDoctorPanel(){document.getElementById("doctorAppointments").innerHTML=appointments.length?appointments.slice().reverse().map(a=>`<article class="card"><h3>${a.doctor}</h3><div class="muted">بیمار: ${a.patient||"کاربر مهمان"}</div><p>${a.date} — ${a.time}</p><span class="pill">${a.status}</span></article>`).join(""):'<div class="card">هنوز نوبتی برای نمایش وجود ندارد.</div>'}
+function login(){let name=document.getElementById("userName").value.trim();if(!name){notice("لطفاً نام خود را وارد کنید.",true);return}currentUser=name;localStorage.setItem("vaghtyar_user",name);notice("ورود نمایشی انجام شد. خوش آمدید "+name);show("home")}
+renderDoctors();
+</script></body></html>
